@@ -48,19 +48,12 @@ main{position:relative;z-index:1;padding:16px}
 .wr span:nth-child(2){margin-top:2px}
 .wr span:last-child{white-space:pre-wrap;color:var(--muted);font-size:13px}
 .wr span:empty{display:none}
-.wr.t{font-weight:700}
+.wr.t{font-weight:700;background:var(--today);border-left:4px solid var(--primary);border-radius:6px;padding-left:8px}
+.wr.t:hover{background:var(--today);filter:brightness(1.12)}
+.wr.t span:first-child,.wr.t span:last-child{color:inherit}
 .wr.p{text-decoration:line-through;opacity:.5}
-#notif{flex:none;max-height:42%;overflow:auto;background:var(--panel);border:var(--cell-border);border-radius:var(--radius);box-shadow:0 6px 24px #0003}
-#notif h3{margin:0;padding:10px 12px;position:sticky;top:0;background:var(--primary);color:var(--on-primary);display:flex;justify-content:space-between;align-items:center;font-size:15px}
-#notif h3 button{padding:0 8px;background:transparent;color:inherit;border-color:currentColor}
-#nb{padding:8px 12px}
-#notif.min #nb{display:none}
-.g{margin:8px 0 4px;font-weight:700;font-size:13px;color:var(--primary)}
-.it{display:flex;gap:6px;padding:6px 8px;margin:3px 0;border-radius:6px;background:var(--cell-off);cursor:pointer;font-size:14px}
-.it:hover{background:var(--cell-hover)}
-.it em{font-style:normal;color:var(--muted);min-width:42px}
 .mu{color:var(--muted);font-size:14px}
-@media(max-width:999px){#side{position:static;width:auto;margin:0 16px 20px}#notif{max-height:none}#wk{overflow:visible}}
+@media(max-width:999px){#side{position:static;width:auto;margin:0 16px 20px}#wk{overflow:visible}}
 @media(max-width:640px){.wd b{display:none}.wd i{display:inline}.c{min-height:72px;padding:3px}.ct{font-size:11px;padding:2px 4px}.ct small{display:none}main{padding:8px}}
 .mod{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:20}
 .mod.on{display:flex}
@@ -97,7 +90,6 @@ li p{margin:2px 0 0;font-size:13px;color:var(--muted);white-space:pre-wrap}
     <div class="bar"><button id="wp" aria-label="Tuần trước">◀</button><h2 id="wt"></h2><button id="wn" aria-label="Tuần sau">▶</button><button id="wtd" class="p">Tuần này</button></div>
     <div id="wl"></div>
   </section>
-  <aside id="notif"><h3><span id="nh"></span><button id="nm" title="Thu gọn / mở rộng">—</button></h3><div id="nb"></div></aside>
 </div>
 
 <div class="mod" id="md"><div class="box">
@@ -110,7 +102,6 @@ li p{margin:2px 0 0;font-size:13px;color:var(--muted);white-space:pre-wrap}
 
 <div class="mod" id="ms"><div class="box">
   <h2>Cài đặt</h2>
-  <label>Nhắc các việc trong bao nhiêu ngày tới (0 = chỉ hôm nay)</label><input id="sn" type="number" min="0" max="365">
   <label>Chủ đề giao diện</label><select id="sth"></select>
   <label>Mã đồng bộ (các máy dùng cùng mã sẽ thấy cùng dữ liệu)</label><input id="sc">
   <p class="mu" id="si"></p>
@@ -233,17 +224,6 @@ function renderGrid(){
   }
   $('#grid').innerHTML=h;
 }
-function renderPanel(){
-  const n=Math.max(0,+S.settings.n||0), t0=new Date(); let cnt=0, h='';
-  for(let i=0;i<=n;i++){
-    const d=new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()+i), k=K(d), L=tasksOf(k).filter(t=>!t.done);
-    if(!L.length)continue; cnt+=L.length;
-    h+=`<div class="g">${i===0?'Hôm nay':i===1?'Ngày mai':`${WD[wi(d)]}, ${p2(d.getDate())}/${p2(d.getMonth()+1)} (còn ${i} ngày)`}</div>`+
-      L.map(t=>`<div class="it" data-k="${k}"><span>${esc(t.title)}</span></div>`).join('');
-  }
-  $('#nh').textContent=`🔔 ${n===0?'Hôm nay':n+' ngày tới'}: ${cnt} việc`;
-  $('#nb').innerHTML=h||'<p class="mu">Không có việc cần làm 🎉</p>';
-}
 function renderList(){
   const L=tasksOf(cur);
   $('#ls').innerHTML=L.length?L.map(t=>`<li class="${t.done?'dn':''}" data-id="${t.id}"><input type="checkbox" ${t.done?'checked':''} aria-label="Hoàn thành">
@@ -264,7 +244,7 @@ const shiftWk=n=>{wkStart=new Date(wkStart.getFullYear(),wkStart.getMonth(),wkSt
 $('#wp').onclick=()=>shiftWk(-7);$('#wn').onclick=()=>shiftWk(7);$('#wtd').onclick=()=>{wkStart=mon(new Date());renderWeek()};
 const setHH=()=>document.documentElement.style.setProperty('--hh',($('header').offsetHeight+10)+'px');
 addEventListener('resize',setHH);
-function renderAll(){applyTheme();setHH();renderGrid();renderWeek();renderPanel();if(cur)renderList()}
+function renderAll(){applyTheme();setHH();renderGrid();renderWeek();if(cur)renderList()}
 
 /* ---------- Thao tác ---------- */
 function openDay(k){
@@ -289,8 +269,6 @@ $('#ls').onclick=e=>{
   else if(a==='e'){editId=t.id;$('#ft').value=t.title;$('#fn').value=t.note||'';$('#fs').textContent='Lưu thay đổi';$('#ft').focus()}
 };
 $('#grid').onclick=e=>{const c=e.target.closest('.c');if(c)openDay(c.dataset.k)};
-$('#nb').onclick=e=>{const c=e.target.closest('.it');if(c)openDay(c.dataset.k)};
-$('#nm').onclick=()=>$('#notif').classList.toggle('min');
 $('#pv').onclick=()=>{view.m--;if(view.m<0){view.m=11;view.y--}renderGrid()};
 $('#nx').onclick=()=>{view.m++;if(view.m>11){view.m=0;view.y++}renderGrid()};
 $('#td').onclick=()=>{const d=new Date();view={y:d.getFullYear(),m:d.getMonth()};renderGrid()};
@@ -298,12 +276,12 @@ document.querySelectorAll('.mod').forEach(m=>m.onmousedown=e=>{if(e.target===m){
 
 /* Cài đặt */
 $('#sth').innerHTML='<option value="auto">Tự động (ngày lễ, ngày thường: ngẫu nhiên siêu anh hùng)</option>'+window.CAL_THEMES.map(t=>`<option value="${t.id}">${t.icon} ${t.name}</option>`).join('');
-$('#bs').onclick=()=>{$('#sn').value=S.settings.n;$('#sth').value=S.settings.theme;$('#sc').value=code;
+$('#bs').onclick=()=>{$('#sth').value=S.settings.theme;$('#sc').value=code;
   $('#si').textContent=DB?'Dữ liệu được lưu trên đám mây theo mã đồng bộ.':'Chưa cấu hình databaseURL trong config.js nên dữ liệu chỉ lưu trên trình duyệt này.';
   $('#ms').classList.add('on')};
 $('#sx').onclick=()=>$('#ms').classList.remove('on');
-function setSetting(){S.settings.n=Math.max(0,Math.min(365,parseInt($('#sn').value)||0));S.settings.theme=$('#sth').value;op('PUT','/settings',S.settings);renderAll()}
-$('#sn').onchange=$('#sth').onchange=setSetting;
+function setSetting(){S.settings.theme=$('#sth').value;op('PUT','/settings',S.settings);renderAll()}
+$('#sth').onchange=setSetting;
 $('#sv').onclick=()=>{const c=clean($('#sc').value);if(c&&c!==code){localStorage.setItem('cal.code',c);location.reload()}else $('#ms').classList.remove('on')};
 
 /* Khởi động */
