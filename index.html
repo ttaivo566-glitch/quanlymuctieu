@@ -104,6 +104,8 @@ li p{margin:2px 0 0;font-size:13px;color:var(--muted);white-space:pre-wrap}
   <h2>Cài đặt</h2>
   <label>Chủ đề giao diện</label><select id="sth"></select>
   <label>Mã đồng bộ (các máy dùng cùng mã sẽ thấy cùng dữ liệu)</label><input id="sc">
+  <label>Link riêng: mở link này trên máy khác là tự đồng bộ</label><input id="sl" readonly>
+  <button id="scp" style="margin-top:4px">Sao chép link riêng</button>
   <p class="mu" id="si"></p>
   <div class="row"><button id="sx">Đóng</button><button id="sv" class="p">Lưu mã & tải lại</button></div>
 </div></div>
@@ -120,8 +122,10 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const clean=s=>String(s||'').replace(/[^A-Za-z0-9_-]/g,'').slice(0,60);
 const norm=r=>({days:(r&&r.days)||{},settings:Object.assign({n:3,theme:'auto'},r&&r.settings)});
 
-const CFG=window.CAL_CONFIG||{}, DB=(CFG.databaseURL||'').replace(/\/$/,'');
-const code=clean(localStorage.getItem('cal.code')||CFG.defaultCode||'lich');
+const CFG=window.CAL_CONFIG||{};
+const hs=clean(location.hash.slice(1)); if(hs)localStorage.setItem('cal.code',hs);   // mở bằng link riêng .../#mã → nhớ mã trên máy này
+const code=clean(localStorage.getItem('cal.code')||CFG.defaultCode||'');
+const DB=code?(CFG.databaseURL||'').replace(/\/$/,''):'';
 const base=()=>`${DB}/lich/${code}`, DK='cal.data.'+code, QK='cal.q.'+code;
 const jp=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
 let S=norm(jp(DK,null)), Q=jp(QK,[]), busy=false, online=false, cur=null, editId=null, themeId=null;
@@ -130,7 +134,7 @@ const save=()=>{localStorage.setItem(DK,JSON.stringify(S));localStorage.setItem(
 
 /* ---------- Đồng bộ (Firebase Realtime Database qua REST) ---------- */
 function status(){
-  $('#st').textContent=!DB?'💾 Chỉ lưu trên máy này':Q.length?`⚠️ Chưa đồng bộ (${Q.length})`:online?'☁️ Đã đồng bộ':'⚠️ Mất kết nối';
+  $('#st').textContent=!DB?(CFG.databaseURL&&!code?'🔒 Chưa có mã: mở bằng link riêng':'💾 Chỉ lưu trên máy này'):Q.length?`⚠️ Chưa đồng bộ (${Q.length})`:online?'☁️ Đã đồng bộ':'⚠️ Mất kết nối';
 }
 async function flush(){
   if(!DB||busy)return; busy=true;
@@ -276,9 +280,10 @@ document.querySelectorAll('.mod').forEach(m=>m.onmousedown=e=>{if(e.target===m){
 
 /* Cài đặt */
 $('#sth').innerHTML='<option value="auto">Tự động (ngày lễ, ngày thường: ngẫu nhiên siêu anh hùng)</option>'+window.CAL_THEMES.map(t=>`<option value="${t.id}">${t.icon} ${t.name}</option>`).join('');
-$('#bs').onclick=()=>{$('#sth').value=S.settings.theme;$('#sc').value=code;
+$('#bs').onclick=()=>{$('#sth').value=S.settings.theme;$('#sc').value=code;$('#sl').value=code?location.origin+location.pathname+'#'+code:'';
   $('#si').textContent=DB?'Dữ liệu được lưu trên đám mây theo mã đồng bộ.':'Chưa cấu hình databaseURL trong config.js nên dữ liệu chỉ lưu trên trình duyệt này.';
   $('#ms').classList.add('on')};
+$('#scp').onclick=()=>{const v=$('#sl').value;if(!v)return;(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>$('#scp').textContent='Đã sao chép ✔',()=>{$('#sl').select()})};
 $('#sx').onclick=()=>$('#ms').classList.remove('on');
 function setSetting(){S.settings.theme=$('#sth').value;op('PUT','/settings',S.settings);renderAll()}
 $('#sth').onchange=setSetting;
