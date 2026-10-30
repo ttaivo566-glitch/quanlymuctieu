@@ -15,7 +15,7 @@ window.CAL_THEMES = [
       '--primary': '#2563eb', '--on-primary': '#ffffff', '--cell': '#ffffff', '--cell-hover': '#eff6ff',
       '--cell-off': '#f1f3f6', '--today': '#fde68a', '--border': '#e2e6ec', '--task-bg': '#dbeafe',
       '--task-text': '#1e3a8a', '--weekend': '#dc2626', '--radius': '8px', '--cell-border': '1px solid #e2e6ec',
-      '--font': "'Segoe UI', system-ui, sans-serif", '--font-title': "'Segoe UI', system-ui, sans-serif",
+      '--font': "'Segoe UI', system-ui, sans-serif", '--title-w': '700', '--font-title': "'Segoe UI', system-ui, sans-serif",
       '--head-bg': 'linear-gradient(135deg,#2563eb,#7c3aed)'
     },
     mark: '📌', decor: null
@@ -29,10 +29,10 @@ window.CAL_THEMES = [
       '--cell-off': '#1e1129', '--today': '#6b3a00', '--border': '#5a3578', '--task-bg': '#ff7518',
       '--task-text': '#1a0f24', '--weekend': '#ffa45c', '--radius': '3px 16px 3px 16px',
       '--cell-border': '2px dashed #5a3578',
-      '--font-title': "'Pirata One', Georgia, 'Times New Roman', serif",
+      '--font-title': "'Grenze Gotisch', Georgia, 'Times New Roman', serif", '--title-w': '700',
       '--head-bg': 'linear-gradient(135deg,#ff7518,#6a1b9a 70%,#1a0f24)'
     },
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Pirata+One&display=swap',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@700&display=swap',
     mark: '🎃', decor: { emoji: ['🎃', '🦇', '👻', '🕸️'], count: 14 }
   },
   {
@@ -44,7 +44,7 @@ window.CAL_THEMES = [
       '--cell-off': '#e9f2ec', '--today': '#c8e6c9', '--border': '#b9d6c1', '--task-bg': '#c62828',
       '--task-text': '#ffffff', '--weekend': '#c62828', '--radius': '18px',
       '--cell-border': '2px solid #cfe5d5',
-      '--font-title': "'Pacifico', Georgia, 'Times New Roman', serif",
+      '--font-title': "'Pacifico', Georgia, 'Times New Roman', serif", '--title-w': '400',
       '--head-bg': 'linear-gradient(135deg,#c62828,#1b5e20)'
     },
     fontUrl: 'https://fonts.googleapis.com/css2?family=Pacifico&display=swap',
