@@ -7,6 +7,7 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;font-family:var(--font);color:var(--text);background:linear-gradient(var(--bg),var(--bg2)) fixed}
+#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;display:none}
 #decor{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
 #decor span{position:absolute;top:-40px;opacity:.5;animation:fall linear infinite}
 @keyframes fall{to{transform:translateY(115vh) rotate(300deg)}}
@@ -149,7 +150,7 @@ function pickTheme(){
   const T=window.CAL_THEMES, id=S.settings.theme;
   if(id!=='auto')return T.find(t=>t.id===id)||T[0];
   const d=new Date(), md=p2(d.getMonth()+1)+'-'+p2(d.getDate());
-  return T.find(t=>t.auto&&md>=t.auto.from&&md<=t.auto.to)||T[0];
+  return T.find(t=>t.auto&&(t.auto.from<=t.auto.to?md>=t.auto.from&&md<=t.auto.to:md>=t.auto.from||md<=t.auto.to))||T[0];
 }
 function applyTheme(){
   const T=pickTheme(), st=document.documentElement.style;
@@ -160,12 +161,41 @@ function applyTheme(){
   let fl=$('#tf');if(!fl){fl=document.createElement('link');fl.id='tf';fl.rel='stylesheet';document.head.appendChild(fl)}
   if(T.fontUrl)fl.href=T.fontUrl;else fl.removeAttribute('href');
   document.title=T.title; window.MARK=T.mark||'📌';
+  fireworks(!!T.fireworks,T.fireworks&&T.fireworks.colors);
   const d=$('#decor'); d.innerHTML='';
   if(T.decor)for(let i=0;i<T.decor.count;i++){
     const s=document.createElement('span'); s.textContent=T.decor.emoji[i%T.decor.emoji.length];
     s.style.cssText=`left:${Math.random()*100}%;font-size:${14+Math.random()*18}px;animation-duration:${9+Math.random()*10}s;animation-delay:-${Math.random()*14}s`;
     d.appendChild(s);
   }
+}
+
+/* ---------- Pháo hoa ---------- */
+let fwOn=false,fwP=[],fwC=null,fwX=null,fwCol=[],fwId=0;
+const dot=(x,y,r,c)=>{fwX.fillStyle=c;fwX.beginPath();fwX.arc(x,y,r,0,6.283);fwX.fill()};
+function fireworks(on,cols){
+  fwCol=cols||['#ff4d4d','#ffd700','#4dd2ff','#ffffff'];
+  if(!fwC){fwC=document.createElement('canvas');fwC.id='fw';document.body.appendChild(fwC);fwX=fwC.getContext('2d');
+    const rs=()=>{fwC.width=innerWidth;fwC.height=innerHeight};rs();addEventListener('resize',rs)}
+  fwOn=on&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
+  fwC.style.display=fwOn?'block':'none'; fwP=[];
+  if(fwOn)fwLoop(++fwId); else fwId++;
+}
+function fwLoop(id){
+  if(!fwOn||id!==fwId)return;
+  const w=fwC.width,h=fwC.height,x=fwX; x.globalAlpha=1;
+  x.globalCompositeOperation='destination-out';x.fillStyle='rgba(0,0,0,.22)';x.fillRect(0,0,w,h);
+  x.globalCompositeOperation='lighter';
+  if(Math.random()<.03)fwP.push({r:1,x:Math.random()*w,y:h,vx:(Math.random()-.5)*2,vy:-(7+Math.random()*4)*Math.max(h,500)/800,ty:h*(.12+Math.random()*.35),c:fwCol[Math.random()*fwCol.length|0]});
+  const n=[];
+  for(const p of fwP){
+    if(p.r){p.x+=p.vx;p.y+=p.vy;
+      if(p.y<=p.ty){const ring=Math.random()<.5;for(let i=0;i<48;i++){const a=i/48*6.283,s=ring?3:1+Math.random()*3.5;n.push({x:p.x,y:p.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,c:p.c})}}
+      else{n.push(p);dot(p.x,p.y,2,p.c)}}
+    else{p.vy+=.04;p.vx*=.985;p.vy*=.985;p.x+=p.vx;p.y+=p.vy;p.l-=.012;
+      if(p.l>0){x.globalAlpha=p.l;dot(p.x,p.y,2,p.c);x.globalAlpha=1;n.push(p)}}
+  }
+  fwP=n; requestAnimationFrame(()=>fwLoop(id));
 }
 
 /* ---------- Hiển thị ---------- */
