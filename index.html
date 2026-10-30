@@ -37,14 +37,20 @@ main{position:relative;z-index:1;padding:16px}
 .ct{background:var(--task-bg);color:var(--task-text);border-radius:6px;padding:4px 6px;font-size:13px;line-height:1.25;overflow:hidden}
 .ct small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9}
 .ct.dn{opacity:.5}
-#wk{margin-top:18px;background:var(--panel);border:var(--cell-border);border-radius:var(--radius);padding:12px}
-.wr{display:grid;grid-template-columns:170px 1fr 1.4fr;gap:10px;padding:8px;border-bottom:1px solid var(--border);cursor:pointer;overflow-wrap:anywhere}
+#side{position:fixed;right:12px;top:var(--hh,96px);bottom:12px;width:316px;display:flex;flex-direction:column;gap:10px;z-index:5}
+#wk{flex:1 1 auto;min-height:120px;overflow:auto;background:var(--panel);border:var(--cell-border);border-radius:var(--radius);padding:10px}
+#wk .bar{flex-wrap:wrap;gap:6px;margin-bottom:6px}
+#wt{flex:1;margin:0;text-align:center;font:var(--title-w,700) 15px var(--font-title)}
+.wr{padding:8px 4px;border-bottom:1px solid var(--border);cursor:pointer;overflow-wrap:anywhere;font-size:14px}
 .wr:hover{background:var(--cell-hover)}
-.wr.wh{font-weight:700;color:var(--primary);cursor:default;background:none}
+.wr span{display:block}
+.wr span:first-child{color:var(--primary);font-size:13px}
+.wr span:nth-child(2){margin-top:2px}
+.wr span:last-child{white-space:pre-wrap;color:var(--muted);font-size:13px}
+.wr span:empty{display:none}
 .wr.t{font-weight:700}
 .wr.p{text-decoration:line-through;opacity:.5}
-.wr span:last-child{white-space:pre-wrap}
-#notif{position:fixed;right:12px;bottom:12px;width:316px;max-height:62vh;overflow:auto;z-index:5;background:var(--panel);border:var(--cell-border);border-radius:var(--radius);box-shadow:0 6px 24px #0003}
+#notif{flex:none;max-height:42%;overflow:auto;background:var(--panel);border:var(--cell-border);border-radius:var(--radius);box-shadow:0 6px 24px #0003}
 #notif h3{margin:0;padding:10px 12px;position:sticky;top:0;background:var(--primary);color:var(--on-primary);display:flex;justify-content:space-between;align-items:center;font-size:15px}
 #notif h3 button{padding:0 8px;background:transparent;color:inherit;border-color:currentColor}
 #nb{padding:8px 12px}
@@ -54,8 +60,8 @@ main{position:relative;z-index:1;padding:16px}
 .it:hover{background:var(--cell-hover)}
 .it em{font-style:normal;color:var(--muted);min-width:42px}
 .mu{color:var(--muted);font-size:14px}
-@media(max-width:999px){#notif{position:static;width:auto;max-height:none;margin:0 16px 20px;position:relative}}
-@media(max-width:640px){.wr{grid-template-columns:1fr;gap:2px}.wr.wh{display:none}.wd b{display:none}.wd i{display:inline}.c{min-height:72px;padding:3px}.ct{font-size:11px;padding:2px 4px}.ct small{display:none}main{padding:8px}}
+@media(max-width:999px){#side{position:static;width:auto;margin:0 16px 20px}#notif{max-height:none}#wk{overflow:visible}}
+@media(max-width:640px){.wd b{display:none}.wd i{display:inline}.c{min-height:72px;padding:3px}.ct{font-size:11px;padding:2px 4px}.ct small{display:none}main{padding:8px}}
 .mod{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:20}
 .mod.on{display:flex}
 .box{background:var(--panel);width:min(540px,94vw);max-height:90vh;overflow:auto;border-radius:14px;padding:16px;border:var(--cell-border)}
@@ -85,12 +91,14 @@ li p{margin:2px 0 0;font-size:13px;color:var(--muted);white-space:pre-wrap}
     <button id="td" class="p">Hôm nay</button>
   </div>
   <div id="grid"></div>
+</main>
+<div id="side">
   <section id="wk">
     <div class="bar"><button id="wp" aria-label="Tuần trước">◀</button><h2 id="wt"></h2><button id="wn" aria-label="Tuần sau">▶</button><button id="wtd" class="p">Tuần này</button></div>
     <div id="wl"></div>
   </section>
-</main>
-<aside id="notif"><h3><span id="nh"></span><button id="nm" title="Thu gọn / mở rộng">—</button></h3><div id="nb"></div></aside>
+  <aside id="notif"><h3><span id="nh"></span><button id="nm" title="Thu gọn / mở rộng">—</button></h3><div id="nb"></div></aside>
+</div>
 
 <div class="mod" id="md"><div class="box">
   <h2 id="dt"></h2>
@@ -246,15 +254,17 @@ const mon=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate()-wi(d));
 let wkStart=mon(new Date());
 function renderWeek(){
   const s=wkStart,e=new Date(s.getFullYear(),s.getMonth(),s.getDate()+6),tk=K(new Date()); let h='';
-  $('#wt').textContent=`Công việc tuần ${p2(s.getDate())}/${p2(s.getMonth()+1)} – ${p2(e.getDate())}/${p2(e.getMonth()+1)}/${e.getFullYear()}`;
+  $('#wt').textContent=`Tuần ${p2(s.getDate())}/${p2(s.getMonth()+1)} – ${p2(e.getDate())}/${p2(e.getMonth()+1)}/${e.getFullYear()}`;
   for(let i=0;i<7;i++){const d=new Date(s.getFullYear(),s.getMonth(),s.getDate()+i),k=K(d);
     for(const t of tasksOf(k))h+=`<div class="wr ${k===tk?'t':k<tk?'p':''}" data-k="${k}"><span>${WD[i]}, ${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}</span><span>${esc(t.title)}</span><span>${esc(t.note)}</span></div>`}
-  $('#wl').innerHTML=h?'<div class="wr wh"><span>Ngày</span><span>Công việc</span><span>Ghi chú</span></div>'+h:'<p class="mu">Không có việc nào trong tuần này.</p>';
+  $('#wl').innerHTML=h?h:'<p class="mu">Không có việc nào trong tuần này.</p>';
 }
 $('#wl').onclick=e=>{const c=e.target.closest('.wr[data-k]');if(c)openDay(c.dataset.k)};
 const shiftWk=n=>{wkStart=new Date(wkStart.getFullYear(),wkStart.getMonth(),wkStart.getDate()+n);renderWeek()};
 $('#wp').onclick=()=>shiftWk(-7);$('#wn').onclick=()=>shiftWk(7);$('#wtd').onclick=()=>{wkStart=mon(new Date());renderWeek()};
-function renderAll(){applyTheme();renderGrid();renderWeek();renderPanel();if(cur)renderList()}
+const setHH=()=>document.documentElement.style.setProperty('--hh',($('header').offsetHeight+10)+'px');
+addEventListener('resize',setHH);
+function renderAll(){applyTheme();setHH();renderGrid();renderWeek();renderPanel();if(cur)renderList()}
 
 /* ---------- Thao tác ---------- */
 function openDay(k){
@@ -298,6 +308,7 @@ $('#sv').onclick=()=>{const c=clean($('#sc').value);if(c&&c!==code){localStorage
 
 /* Khởi động */
 renderAll(); status(); poll();
+if(document.fonts)document.fonts.ready.then(setHH);
 setInterval(poll,15000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});
 setInterval(()=>{const d=new Date();if(K(d)!==K(now)){now=d;themeId=null;renderAll()}},60000);
