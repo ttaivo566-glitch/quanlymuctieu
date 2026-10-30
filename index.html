@@ -12,7 +12,7 @@ body{margin:0;min-height:100vh;font-family:var(--font);color:var(--text);backgro
 @keyframes fall{to{transform:translateY(115vh) rotate(300deg)}}
 @media(prefers-reduced-motion:reduce){#decor span{animation:none;top:20%}}
 header{position:relative;z-index:1;background:var(--head-bg);color:var(--on-primary);padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-h1{margin:0;font:700 clamp(24px,4vw,38px)/1.1 var(--font-title)}
+h1{margin:0;font:var(--title-w,700) clamp(24px,4vw,38px)/1.1 var(--font-title)}
 #sub{opacity:.85;font-size:14px}
 button{font:inherit;cursor:pointer;border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:8px;padding:7px 12px}
 button:hover{border-color:var(--primary)}
@@ -23,7 +23,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 main{position:relative;z-index:1;padding:16px}
 @media(min-width:1000px){main{margin-right:340px}}
 .bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-#mt{flex:1;margin:0;font:700 22px var(--font-title);text-align:center}
+#mt{flex:1;margin:0;font:var(--title-w,700) 22px var(--font-title);text-align:center}
 #grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
 .wd{text-align:center;font-weight:700;padding:8px 2px;background:var(--panel);border:var(--cell-border);border-radius:var(--radius)}
 .wd i{display:none;font-style:normal}
@@ -51,7 +51,7 @@ main{position:relative;z-index:1;padding:16px}
 .mod{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:20}
 .mod.on{display:flex}
 .box{background:var(--panel);width:min(540px,94vw);max-height:90vh;overflow:auto;border-radius:14px;padding:16px;border:var(--cell-border)}
-.box h2{margin:0 0 10px;font:700 20px var(--font-title)}
+.box h2{margin:0 0 10px;font:var(--title-w,700) 20px var(--font-title)}
 input,textarea,select{width:100%;padding:8px;margin:4px 0;border-radius:8px;border:1px solid var(--border);background:var(--cell);color:var(--text);font:inherit}
 label{font-size:13px;color:var(--muted)}
 ul{list-style:none;margin:0 0 12px;padding:0}
