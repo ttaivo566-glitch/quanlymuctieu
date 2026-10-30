@@ -37,6 +37,13 @@ main{position:relative;z-index:1;padding:16px}
 .ct{background:var(--task-bg);color:var(--task-text);border-radius:6px;padding:4px 6px;font-size:13px;line-height:1.25;overflow:hidden}
 .ct small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9}
 .ct.dn{opacity:.5}
+#wk{margin-top:18px;background:var(--panel);border:var(--cell-border);border-radius:var(--radius);padding:12px}
+.wr{display:grid;grid-template-columns:170px 1fr 1.4fr;gap:10px;padding:8px;border-bottom:1px solid var(--border);cursor:pointer;overflow-wrap:anywhere}
+.wr:hover{background:var(--cell-hover)}
+.wr.wh{font-weight:700;color:var(--primary);cursor:default;background:none}
+.wr.t{font-weight:700}
+.wr.p{text-decoration:line-through;opacity:.5}
+.wr span:last-child{white-space:pre-wrap}
 #notif{position:fixed;right:12px;bottom:12px;width:316px;max-height:62vh;overflow:auto;z-index:5;background:var(--panel);border:var(--cell-border);border-radius:var(--radius);box-shadow:0 6px 24px #0003}
 #notif h3{margin:0;padding:10px 12px;position:sticky;top:0;background:var(--primary);color:var(--on-primary);display:flex;justify-content:space-between;align-items:center;font-size:15px}
 #notif h3 button{padding:0 8px;background:transparent;color:inherit;border-color:currentColor}
@@ -48,7 +55,7 @@ main{position:relative;z-index:1;padding:16px}
 .it em{font-style:normal;color:var(--muted);min-width:42px}
 .mu{color:var(--muted);font-size:14px}
 @media(max-width:999px){#notif{position:static;width:auto;max-height:none;margin:0 16px 20px;position:relative}}
-@media(max-width:640px){.wd b{display:none}.wd i{display:inline}.c{min-height:72px;padding:3px}.ct{font-size:11px;padding:2px 4px}.ct small{display:none}main{padding:8px}}
+@media(max-width:640px){.wr{grid-template-columns:1fr;gap:2px}.wr.wh{display:none}.wd b{display:none}.wd i{display:inline}.c{min-height:72px;padding:3px}.ct{font-size:11px;padding:2px 4px}.ct small{display:none}main{padding:8px}}
 .mod{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:20}
 .mod.on{display:flex}
 .box{background:var(--panel);width:min(540px,94vw);max-height:90vh;overflow:auto;border-radius:14px;padding:16px;border:var(--cell-border)}
@@ -78,6 +85,10 @@ li p{margin:2px 0 0;font-size:13px;color:var(--muted);white-space:pre-wrap}
     <button id="td" class="p">Hôm nay</button>
   </div>
   <div id="grid"></div>
+  <section id="wk">
+    <div class="bar"><button id="wp" aria-label="Tuần trước">◀</button><h2 id="wt"></h2><button id="wn" aria-label="Tuần sau">▶</button><button id="wtd" class="p">Tuần này</button></div>
+    <div id="wl"></div>
+  </section>
 </main>
 <aside id="notif"><h3><span id="nh"></span><button id="nm" title="Thu gọn / mở rộng">—</button></h3><div id="nb"></div></aside>
 
@@ -98,8 +109,8 @@ li p{margin:2px 0 0;font-size:13px;color:var(--muted);white-space:pre-wrap}
   <div class="row"><button id="sx">Đóng</button><button id="sv" class="p">Lưu mã & tải lại</button></div>
 </div></div>
 
-<script src="config.js?v=4"></script>
-<script src="themes.js?v=4"></script>
+<script src="config.js?v=5"></script>
+<script src="themes.js?v=5"></script>
 <script>
 const WD=['Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy','Chủ Nhật'], WS=['T2','T3','T4','T5','T6','T7','CN'];
 const $=s=>document.querySelector(s), p2=n=>String(n).padStart(2,'0');
@@ -146,11 +157,15 @@ const fmtT=ms=>{const d=new Date(ms);return `${p2(d.getHours())}:${p2(d.getMinut
 const tasksOf=k=>Object.values(S.days[k]||{}).sort((a,b)=>cr(a)-cr(b));
 
 /* ---------- Chủ đề ---------- */
+let rndT=null;
 function pickTheme(){
   const T=window.CAL_THEMES, id=S.settings.theme;
   if(id!=='auto')return T.find(t=>t.id===id)||T[0];
   const d=new Date(), md=p2(d.getMonth()+1)+'-'+p2(d.getDate());
-  return T.find(t=>t.auto&&(t.auto.from<=t.auto.to?md>=t.auto.from&&md<=t.auto.to:md>=t.auto.from||md<=t.auto.to))||T[0];
+  const hol=T.find(t=>t.auto&&(t.auto.from<=t.auto.to?md>=t.auto.from&&md<=t.auto.to:md>=t.auto.from||md<=t.auto.to));
+  if(hol)return hol;
+  const pool=T.filter(t=>t.pool); if(!pool.length)return T[0];
+  return rndT||(rndT=pool[Math.random()*pool.length|0]);
 }
 function applyTheme(){
   const T=pickTheme(), st=document.documentElement.style;
@@ -227,7 +242,19 @@ function renderList(){
     <div><b>${esc(t.title)}</b>${t.note?`<p>${esc(t.note)}</p>`:''}<p class="mu">🕒 Thêm lúc ${fmtT(cr(t))}</p></div>
     <button data-a="e" title="Sửa">✏️</button><button data-a="x" title="Xóa">🗑️</button></li>`).join(''):'<li class="mu">Chưa có việc nào trong ngày này.</li>';
 }
-function renderAll(){applyTheme();renderGrid();renderPanel();if(cur)renderList()}
+const mon=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate()-wi(d));
+let wkStart=mon(new Date());
+function renderWeek(){
+  const s=wkStart,e=new Date(s.getFullYear(),s.getMonth(),s.getDate()+6),tk=K(new Date()); let h='';
+  $('#wt').textContent=`Công việc tuần ${p2(s.getDate())}/${p2(s.getMonth()+1)} – ${p2(e.getDate())}/${p2(e.getMonth()+1)}/${e.getFullYear()}`;
+  for(let i=0;i<7;i++){const d=new Date(s.getFullYear(),s.getMonth(),s.getDate()+i),k=K(d);
+    for(const t of tasksOf(k))h+=`<div class="wr ${k===tk?'t':k<tk?'p':''}" data-k="${k}"><span>${WD[i]}, ${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}</span><span>${esc(t.title)}</span><span>${esc(t.note)}</span></div>`}
+  $('#wl').innerHTML=h?'<div class="wr wh"><span>Ngày</span><span>Công việc</span><span>Ghi chú</span></div>'+h:'<p class="mu">Không có việc nào trong tuần này.</p>';
+}
+$('#wl').onclick=e=>{const c=e.target.closest('.wr[data-k]');if(c)openDay(c.dataset.k)};
+const shiftWk=n=>{wkStart=new Date(wkStart.getFullYear(),wkStart.getMonth(),wkStart.getDate()+n);renderWeek()};
+$('#wp').onclick=()=>shiftWk(-7);$('#wn').onclick=()=>shiftWk(7);$('#wtd').onclick=()=>{wkStart=mon(new Date());renderWeek()};
+function renderAll(){applyTheme();renderGrid();renderWeek();renderPanel();if(cur)renderList()}
 
 /* ---------- Thao tác ---------- */
 function openDay(k){
@@ -260,7 +287,7 @@ $('#td').onclick=()=>{const d=new Date();view={y:d.getFullYear(),m:d.getMonth()}
 document.querySelectorAll('.mod').forEach(m=>m.onmousedown=e=>{if(e.target===m){m.classList.remove('on');if(m.id==='md')cur=null}});
 
 /* Cài đặt */
-$('#sth').innerHTML='<option value="auto">Tự động theo ngày lễ</option>'+window.CAL_THEMES.map(t=>`<option value="${t.id}">${t.icon} ${t.name}</option>`).join('');
+$('#sth').innerHTML='<option value="auto">Tự động (ngày lễ, ngày thường: ngẫu nhiên siêu anh hùng)</option>'+window.CAL_THEMES.map(t=>`<option value="${t.id}">${t.icon} ${t.name}</option>`).join('');
 $('#bs').onclick=()=>{$('#sn').value=S.settings.n;$('#sth').value=S.settings.theme;$('#sc').value=code;
   $('#si').textContent=DB?'Dữ liệu được lưu trên đám mây theo mã đồng bộ.':'Chưa cấu hình databaseURL trong config.js nên dữ liệu chỉ lưu trên trình duyệt này.';
   $('#ms').classList.add('on')};
