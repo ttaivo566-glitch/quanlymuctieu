@@ -84,7 +84,6 @@ li p{margin:2px 0 0;font-size:13px;color:var(--muted);white-space:pre-wrap}
   <h2 id="dt"></h2>
   <ul id="ls"></ul>
   <label>Tên công việc</label><input id="ft" maxlength="120" placeholder="Ví dụ: Họp giao ban">
-  <label>Giờ (không bắt buộc)</label><input id="fh" type="time">
   <label>Ghi chú</label><textarea id="fn" rows="3" maxlength="600"></textarea>
   <div class="row"><button id="fc">Đóng</button><button id="fs" class="p">Thêm việc</button></div>
 </div></div>
@@ -141,7 +140,9 @@ async function poll(){
 }
 
 /* ---------- Dữ liệu công việc ---------- */
-const tasksOf=k=>Object.values(S.days[k]||{}).sort((a,b)=>((a.time||'99:99')+a.id).localeCompare((b.time||'99:99')+b.id));
+const cr=t=>t.created||parseInt(String(t.id).slice(0,-4),36)||0;
+const fmtT=ms=>{const d=new Date(ms);return `${p2(d.getHours())}:${p2(d.getMinutes())} ngày ${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`};
+const tasksOf=k=>Object.values(S.days[k]||{}).sort((a,b)=>cr(a)-cr(b));
 
 /* ---------- Chủ đề ---------- */
 function pickTheme(){
@@ -185,7 +186,7 @@ function renderPanel(){
     const d=new Date(t0.getFullYear(),t0.getMonth(),t0.getDate()+i), k=K(d), L=tasksOf(k).filter(t=>!t.done);
     if(!L.length)continue; cnt+=L.length;
     h+=`<div class="g">${i===0?'Hôm nay':i===1?'Ngày mai':`${WD[wi(d)]}, ${p2(d.getDate())}/${p2(d.getMonth()+1)} (còn ${i} ngày)`}</div>`+
-      L.map(t=>`<div class="it" data-k="${k}"><em>${t.time||'cả ngày'}</em><span>${esc(t.title)}</span></div>`).join('');
+      L.map(t=>`<div class="it" data-k="${k}"><span>${esc(t.title)}</span></div>`).join('');
   }
   $('#nh').textContent=`🔔 ${n===0?'Hôm nay':n+' ngày tới'}: ${cnt} việc`;
   $('#nb').innerHTML=h||'<p class="mu">Không có việc cần làm 🎉</p>';
@@ -193,7 +194,7 @@ function renderPanel(){
 function renderList(){
   const L=tasksOf(cur);
   $('#ls').innerHTML=L.length?L.map(t=>`<li class="${t.done?'dn':''}" data-id="${t.id}"><input type="checkbox" ${t.done?'checked':''} aria-label="Hoàn thành">
-    <div><b>${t.time?t.time+' · ':''}${esc(t.title)}</b>${t.note?`<p>${esc(t.note)}</p>`:''}</div>
+    <div><b>${esc(t.title)}</b>${t.note?`<p>${esc(t.note)}</p>`:''}<p class="mu">🕒 Thêm lúc ${fmtT(cr(t))}</p></div>
     <button data-a="e" title="Sửa">✏️</button><button data-a="x" title="Xóa">🗑️</button></li>`).join(''):'<li class="mu">Chưa có việc nào trong ngày này.</li>';
 }
 function renderAll(){applyTheme();renderGrid();renderPanel();if(cur)renderList()}
@@ -203,12 +204,12 @@ function openDay(k){
   cur=k; const d=fromK(k); $('#dt').textContent=`${WD[wi(d)]}, ${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`;
   resetForm(); renderList(); $('#md').classList.add('on');
 }
-function resetForm(){editId=null;$('#ft').value=$('#fh').value=$('#fn').value='';$('#fs').textContent='Thêm việc'}
+function resetForm(){editId=null;$('#ft').value=$('#fn').value='';$('#fs').textContent='Thêm việc'}
 function putTask(t){(S.days[cur]=S.days[cur]||{})[t.id]=t; op('PUT',`/days/${cur}/${t.id}`,t)}
 function submit(){
   const title=$('#ft').value.trim(); if(!title){$('#ft').focus();return}
   const old=editId&&S.days[cur]&&S.days[cur][editId];
-  putTask({id:editId||Date.now().toString(36)+Math.random().toString(36).slice(2,6),title,time:$('#fh').value,note:$('#fn').value.trim(),done:old?old.done:false});
+  putTask({id:editId||Date.now().toString(36)+Math.random().toString(36).slice(2,6),title,created:old?cr(old):Date.now(),note:$('#fn').value.trim(),done:old?old.done:false});
   resetForm(); renderAll(); $('#ft').focus();
 }
 $('#fs').onclick=submit;
@@ -218,7 +219,7 @@ $('#ls').onclick=e=>{
   const li=e.target.closest('li[data-id]'); if(!li)return; const t=S.days[cur][li.dataset.id], a=e.target.dataset.a;
   if(e.target.type==='checkbox'){t.done=e.target.checked;putTask(t);renderAll()}
   else if(a==='x'){delete S.days[cur][t.id];if(!Object.keys(S.days[cur]).length)delete S.days[cur];op('DELETE',`/days/${cur}/${t.id}`);renderAll()}
-  else if(a==='e'){editId=t.id;$('#ft').value=t.title;$('#fh').value=t.time||'';$('#fn').value=t.note||'';$('#fs').textContent='Lưu thay đổi';$('#ft').focus()}
+  else if(a==='e'){editId=t.id;$('#ft').value=t.title;$('#fn').value=t.note||'';$('#fs').textContent='Lưu thay đổi';$('#ft').focus()}
 };
 $('#grid').onclick=e=>{const c=e.target.closest('.c');if(c)openDay(c.dataset.k)};
 $('#nb').onclick=e=>{const c=e.target.closest('.it');if(c)openDay(c.dataset.k)};
