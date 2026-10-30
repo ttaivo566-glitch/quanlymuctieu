@@ -156,6 +156,8 @@ function applyTheme(){
   const all=Object.assign({},window.CAL_THEMES[0].vars,T.vars);
   for(const k in all)st.setProperty(k,all[k]);
   $('#title').textContent=`${T.icon} ${T.title}`; $('#sub').textContent=T.subtitle||'';
+  let fl=$('#tf');if(!fl){fl=document.createElement('link');fl.id='tf';fl.rel='stylesheet';document.head.appendChild(fl)}
+  if(T.fontUrl)fl.href=T.fontUrl;else fl.removeAttribute('href');
   document.title=T.title; window.MARK=T.mark||'📌';
   const d=$('#decor'); d.innerHTML='';
   if(T.decor)for(let i=0;i<T.decor.count;i++){
