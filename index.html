@@ -87,7 +87,7 @@ li p{margin:2px 0 0;font-size:13px;color:var(--muted);white-space:pre-wrap}
 </main>
 <div id="side">
   <section id="wk">
-    <div class="bar"><button id="wp" aria-label="Tuần trước">◀</button><h2 id="wt"></h2><button id="wn" aria-label="Tuần sau">▶</button><button id="wtd" class="p">Tuần này</button></div>
+    <div class="bar"><button id="wp" aria-label="Tuần trước">◀</button><h2 id="wt"></h2><button id="wn" aria-label="Tuần sau">▶</button><button id="wtd" class="p">Tuần này</button><button id="wmode"></button></div>
     <div id="wl"></div>
   </section>
 </div>
@@ -235,17 +235,23 @@ function renderList(){
     <button data-a="e" title="Sửa">✏️</button><button data-a="x" title="Xóa">🗑️</button></li>`).join(''):'<li class="mu">Chưa có việc nào trong ngày này.</li>';
 }
 const mon=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate()-wi(d));
-let wkStart=mon(new Date());
+let wkStart=mon(new Date()), wkMode=localStorage.getItem('cal.wkmode')||'week';
 function renderWeek(){
-  const s=wkStart,e=new Date(s.getFullYear(),s.getMonth(),s.getDate()+6),tk=K(new Date()); let h='';
-  $('#wt').textContent=`Tuần ${p2(s.getDate())}/${p2(s.getMonth()+1)} – ${p2(e.getDate())}/${p2(e.getMonth()+1)}/${e.getFullYear()}`;
-  for(let i=0;i<7;i++){const d=new Date(s.getFullYear(),s.getMonth(),s.getDate()+i),k=K(d);
-    for(const t of tasksOf(k))h+=`<div class="wr ${k===tk?'t':k<tk?'p':''}" data-k="${k}"><span>${WD[i]}, ${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}</span><span>${esc(t.title)}</span><span>${esc(t.note)}</span></div>`}
-  $('#wl').innerHTML=h?h:'<p class="mu">Không có việc nào trong tuần này.</p>';
+  const mo=wkMode==='month', s=mo?new Date(view.y,view.m,1):wkStart, n=mo?new Date(view.y,view.m+1,0).getDate():7, tk=K(new Date()); let h='';
+  if(mo)$('#wt').textContent=`Tháng ${view.m+1}/${view.y}`;
+  else{const e=new Date(s.getFullYear(),s.getMonth(),s.getDate()+6);$('#wt').textContent=`Tuần ${p2(s.getDate())}/${p2(s.getMonth()+1)} – ${p2(e.getDate())}/${p2(e.getMonth()+1)}/${e.getFullYear()}`}
+  $('#wmode').textContent=mo?'📅 Xem theo tuần':'🗓️ Xem cả tháng'; $('#wtd').textContent=mo?'Tháng này':'Tuần này';
+  for(let i=0;i<n;i++){const d=new Date(s.getFullYear(),s.getMonth(),s.getDate()+i),k=K(d);
+    for(const t of tasksOf(k))h+=`<div class="wr ${k===tk?'t':k<tk?'p':''}" data-k="${k}"><span>${WD[wi(d)]}, ${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}</span><span>${esc(t.title)}</span><span>${esc(t.note)}</span></div>`}
+  $('#wl').innerHTML=h||`<p class="mu">Không có việc nào trong ${mo?'tháng':'tuần'} này.</p>`;
 }
 $('#wl').onclick=e=>{const c=e.target.closest('.wr[data-k]');if(c)openDay(c.dataset.k)};
 const shiftWk=n=>{wkStart=new Date(wkStart.getFullYear(),wkStart.getMonth(),wkStart.getDate()+n);renderWeek()};
-$('#wp').onclick=()=>shiftWk(-7);$('#wn').onclick=()=>shiftWk(7);$('#wtd').onclick=()=>{wkStart=mon(new Date());renderWeek()};
+const jumpToday=()=>{const w=$('#wk'),t=$('#wl .wr.t');if(t)w.scrollTop=t.getBoundingClientRect().top-w.getBoundingClientRect().top+w.scrollTop-90};
+$('#wp').onclick=()=>wkMode==='month'?$('#pv').click():shiftWk(-7);
+$('#wn').onclick=()=>wkMode==='month'?$('#nx').click():shiftWk(7);
+$('#wtd').onclick=()=>{if(wkMode==='month')$('#td').click();else{wkStart=mon(new Date());renderWeek()}jumpToday()};
+$('#wmode').onclick=()=>{wkMode=wkMode==='month'?'week':'month';localStorage.setItem('cal.wkmode',wkMode);renderWeek();jumpToday()};
 const setHH=()=>document.documentElement.style.setProperty('--hh',($('header').offsetHeight+10)+'px');
 addEventListener('resize',setHH);
 function renderAll(){applyTheme();setHH();renderGrid();renderWeek();if(cur)renderList()}
@@ -273,9 +279,9 @@ $('#ls').onclick=e=>{
   else if(a==='e'){editId=t.id;$('#ft').value=t.title;$('#fn').value=t.note||'';$('#fs').textContent='Lưu thay đổi';$('#ft').focus()}
 };
 $('#grid').onclick=e=>{const c=e.target.closest('.c');if(c)openDay(c.dataset.k)};
-$('#pv').onclick=()=>{view.m--;if(view.m<0){view.m=11;view.y--}renderGrid()};
-$('#nx').onclick=()=>{view.m++;if(view.m>11){view.m=0;view.y++}renderGrid()};
-$('#td').onclick=()=>{const d=new Date();view={y:d.getFullYear(),m:d.getMonth()};renderGrid()};
+$('#pv').onclick=()=>{view.m--;if(view.m<0){view.m=11;view.y--}renderGrid();renderWeek()};
+$('#nx').onclick=()=>{view.m++;if(view.m>11){view.m=0;view.y++}renderGrid();renderWeek()};
+$('#td').onclick=()=>{const d=new Date();view={y:d.getFullYear(),m:d.getMonth()};renderGrid();renderWeek()};
 document.querySelectorAll('.mod').forEach(m=>m.onmousedown=e=>{if(e.target===m){m.classList.remove('on');if(m.id==='md')cur=null}});
 
 /* Cài đặt */
